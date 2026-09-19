@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -52,7 +52,11 @@ model, dataset = train_model()
 
 @app.get("/")
 def home():
-    return render_template("index.html", crop_count=dataset["Crop"].nunique())
+    return jsonify({
+        "service": "crop recommendation API",
+        "status": "ok",
+        "recommendation_endpoint": "/api/recommend",
+    })
 
 
 @app.get("/api/health")
