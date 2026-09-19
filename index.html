@@ -88,63 +88,6 @@
         </div>
     </div>
 
-    <!-- Frontend logic connecting to ML Backend -->
-    <script>
-        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            // Element UI Hooks
-            const form = e.target;
-            const btnText = document.getElementById('btnText');
-            const spinner = document.getElementById('loadingSpinner');
-            const resultCard = document.getElementById('resultCard');
-            const errorCard = document.getElementById('errorCard');
-            const recommendedCrop = document.getElementById('recommendedCrop');
-            const cropInfo = document.getElementById('cropInfo');
-
-            // Toggle loading state
-            btnText.textContent = "Processing Features...";
-            spinner.classList.remove('hidden');
-            resultCard.classList.add('hidden');
-            errorCard.classList.add('hidden');
-
-            // Gather inputs into a JSON payload
-            const formData = new FormData(form);
-            const payload = {
-                temperature: parseFloat(formData.get('temperature')),
-                humidity: parseFloat(formData.get('humidity')),
-                rainfall: parseFloat(formData.get('rainfall')),
-                soil_type: formData.get('soil_type')
-            };
-
-            try {
-                // UPDATE THIS URL to point to your live running FastAPI or Flask server endpoint
-                const response = await fetch('http://127.0.0', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) throw new Error('API server error returned');
-
-                const data = await response.json();
-
-                // Expecting backend structure like: { "crop": "Wheat", "info": "Detailed info text..." }
-                recommendedCrop.textContent = data.crop;
-                cropInfo.textContent = data.info || `Optimal conditions met for farming ${data.crop}.`;
-                
-                resultCard.classList.remove('hidden');
-            } catch (error) {
-                console.error("Prediction Error:", error);
-                errorCard.classList.remove('hidden');
-            } finally {
-                // Restore button state
-                btnText.textContent = "Analyze & Recommend Crop";
-                spinner.classList.add('hidden');
-            }
-        });
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
