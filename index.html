@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Crop Recommendation System</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-emerald-50 min-h-screen font-sans antialiased">
+
+    <div class="container mx-auto px-4 py-12 max-w-3xl">
+        <!-- Header Section -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-emerald-800 tracking-tight mb-2">🌾 Crop Recommendation Engine</h1>
+            <p class="text-emerald-600">Input your environmental and soil metrics to find the optimal crop for cultivation.</p>
+        </header>
+
+        <!-- Main Form & Card Container -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-emerald-100 p-8">
+            <form id="predictionForm" class="space-y-6">
+                
+                <!-- Weather Parameters Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Temperature (°C)</label>
+                        <input type="number" name="temperature" step="0.1" required placeholder="e.g., 28.5"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Humidity (%)</label>
+                        <input type="number" name="humidity" step="0.1" required placeholder="e.g., 75"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Rainfall (mm)</label>
+                        <input type="number" name="rainfall" step="0.1" required placeholder="e.g., 120"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Soil Type Dropdown -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Soil Type</label>
+                    <select name="soil_type" required
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                        <option value="" disabled selected>Select your soil profile...</option>
+                        <option value="alluvial">Alluvial Soil</option>
+                        <option value="black">Black Soil (Regur)</option>
+                        <option value="red">Red Soil</option>
+                        <option value="laterite">Laterite Soil</option>
+                        <option value="sandy">Sandy / Arid Soil</option>
+                        <option value="clayey">Clayey Soil</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                    class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                    <span id="btnText">Analyze & Recommend Crop</span>
+                    <!-- Loading Spinner SVG -->
+                    <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://w3.org" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Results Display Section -->
+            <div id="resultCard" class="hidden mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-xl transition-all duration-300">
+                <div class="flex items-start space-x-4">
+                    <div class="p-3 bg-emerald-600 text-white rounded-lg text-2xl">🌱</div>
+                    <div class="flex-1">
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-700">Recommended Crop</h3>
+                        <h2 id="recommendedCrop" class="text-3xl font-extrabold text-gray-900 mt-1 capitalize">Rice</h2>
+                        <div class="mt-4 pt-4 border-t border-emerald-200 text-sm text-gray-600 space-y-2">
+                            <p id="cropInfo">This crop thrives remarkably well under the provided environmental conditions and soil constraints.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="errorCard" class="hidden mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+                ⚠️ Something went wrong. Please check your inputs or try again later.
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend logic connecting to ML Backend -->
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Element UI Hooks
+            const form = e.target;
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('loadingSpinner');
+            const resultCard = document.getElementById('resultCard');
+            const errorCard = document.getElementById('errorCard');
+            const recommendedCrop = document.getElementById('recommendedCrop');
+            const cropInfo = document.getElementById('cropInfo');
+
+            // Toggle loading state
+            btnText.textContent = "Processing Features...";
+            spinner.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+            errorCard.classList.add('hidden');
+
+            // Gather inputs into a JSON payload
+            const formData = new FormData(form);
+            const payload = {
+                temperature: parseFloat(formData.get('temperature')),
+                humidity: parseFloat(formData.get('humidity')),
+                rainfall: parseFloat(formData.get('rainfall')),
+                soil_type: formData.get('soil_type')
+            };
+
+            try {
+                // UPDATE THIS URL to point to your live running FastAPI or Flask server endpoint
+                const response = await fetch('http://127.0.0', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('API server error returned');
+
+                const data = await response.json();
+
+                // Expecting backend structure like: { "crop": "Wheat", "info": "Detailed info text..." }
+                recommendedCrop.textContent = data.crop;
+                cropInfo.textContent = data.info || `Optimal conditions met for farming ${data.crop}.`;
+                
+                resultCard.classList.remove('hidden');
+            } catch (error) {
+                console.error("Prediction Error:", error);
+                errorCard.classList.remove('hidden');
+            } finally {
+                // Restore button state
+                btnText.textContent = "Analyze & Recommend Crop";
+                spinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
