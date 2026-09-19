@@ -1,0 +1,193 @@
+/* Color Palette Variables */
+:root {
+    --bg-emerald-50: #f0fdf4;
+    --border-emerald-100: #dcfce7;
+    --border-emerald-200: #bbf7d0;
+    --text-emerald-600: #059669;
+    --text-emerald-700: #047857;
+    --bg-emerald-600: #059669;
+    --bg-emerald-700: #047857;
+}
+
+/* Base Body Styles */
+body {
+    background-color: var(--bg-emerald-50);
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Container & Layout */
+.app-container {
+    max-width: 48rem; /* max-w-3xl */
+    margin: 0 auto;
+    padding: 3rem 1rem;
+}
+
+.app-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.app-header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-emerald-700);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+.app-header p {
+    color: var(--text-emerald-600);
+    margin: 0;
+}
+
+/* Form Dashboard Card */
+.main-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--border-emerald-100);
+    padding: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .form-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.form-input:focus, .form-select:focus {
+    border-color: var(--bg-emerald-600);
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+/* Form Controls Button */
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--bg-emerald-600);
+    color: #ffffff;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: var(--bg-emerald-700);
+    transform: translateY(-1px);
+}
+
+/* Output Layout Components */
+.result-card {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: var(--bg-emerald-50);
+    border: 1px solid var(--border-emerald-200);
+    border-radius: 0.75rem;
+}
+
+.result-icon {
+    padding: 0.75rem;
+    background-color: var(--bg-emerald-600);
+    font-size: 1.5rem;
+    border-radius: 0.5rem;
+    line-height: 1;
+}
+
+.result-content {
+    flex: 1;
+}
+
+.result-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-emerald-700);
+    margin: 0;
+}
+
+.result-title {
+    font-size: 1.875rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0.25rem 0 0 0;
+    text-transform: capitalize;
+}
+
+.result-details {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-emerald-200);
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+.error-card {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Utilities */
+.hidden {
+    display: none !important;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
