@@ -1,16 +1,20 @@
-# Crop recommendation API
+# Crop recommendation project
 
-This branch contains the Flask API and the R machine-learning model.
+The project keeps the frontend and backend separate:
+
+- `frontend/` contains the browser client.
+- `backend/` contains the Flask API, R model, and dataset.
 
 ## Setup
 
 ```powershell
+cd backend
 pip install -r requirements.txt
 Rscript -e "install.packages(c('jsonlite', 'randomForest'), repos='https://cloud.r-project.org')"
 py app.py
 ```
 
-The API reads `data/crop_weather.csv`. Flask validates requests and calls `model.R`, which trains a random forest in R and returns the recommended crop with confidence and alternatives.
+The API reads `backend/data/crop_weather.csv`. Flask validates requests and calls `backend/model.R`, which trains a random forest in R and returns the recommended crop with confidence and alternatives.
 
 `POST /api/recommend` expects:
 
