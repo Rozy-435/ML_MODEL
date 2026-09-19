@@ -1,16 +1,16 @@
+import csv
+import json
+import os
+import subprocess
 from pathlib import Path
 
-import pandas as pd
 from flask import Flask, jsonify, request
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "crop_weather.csv"
 REQUIRED_COLUMNS = ["Temperature", "Rainfall", "Humidity", "Soil_Type", "Crop"]
 FEATURE_COLUMNS = REQUIRED_COLUMNS[:-1]
+RSCRIPT_PATH = os.environ.get("RSCRIPT_PATH", "Rscript")
 
 app = Flask(__name__)
 model = None
@@ -24,30 +24,17 @@ def add_cors_headers(response):
     return response
 
 
-def train_model():
-    dataset = pd.read_csv(DATA_PATH)
-    missing_columns = set(REQUIRED_COLUMNS) - set(dataset.columns)
+def load_dataset():
+    with DATA_PATH.open(newline="", encoding="utf-8") as data_file:
+        rows = list(csv.DictReader(data_file))
+    missing_columns = set(REQUIRED_COLUMNS) - set(rows[0])
     if missing_columns:
         raise ValueError(f"Dataset is missing columns: {sorted(missing_columns)}")
-
-    dataset = dataset.dropna(subset=REQUIRED_COLUMNS)
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("soil", OneHotEncoder(handle_unknown="ignore"), ["Soil_Type"]),
-            ("weather", "passthrough", ["Temperature", "Rainfall", "Humidity"]),
-        ]
-    )
-    pipeline = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("classifier", RandomForestClassifier(n_estimators=240, random_state=42)),
-        ]
-    )
-    pipeline.fit(dataset[FEATURE_COLUMNS], dataset["Crop"])
-    return pipeline, dataset
+    return rows
 
 
-model, dataset = train_model()
+dataset = load_dataset()
+soil_types = sorted({row["Soil_Type"] for row in dataset})
 
 
 @app.get("/")
@@ -56,12 +43,13 @@ def home():
         "service": "crop recommendation API",
         "status": "ok",
         "recommendation_endpoint": "/api/recommend",
+        "model": "R randomForest",
     })
 
 
 @app.get("/api/health")
 def health():
-    return jsonify({"status": "ok", "rows": len(dataset), "crops": dataset["Crop"].nunique()})
+    return jsonify({"status": "ok", "rows": len(dataset), "crops": len({row['Crop'] for row in dataset}), "model": "R randomForest"})
 
 
 @app.post("/api/recommend")
@@ -80,30 +68,26 @@ def recommend():
     if not -20 <= temperature <= 60 or not 0 <= rainfall <= 1000 or not 0 <= humidity <= 100:
         return jsonify({"error": "Use realistic ranges: temperature -20 to 60 C, rainfall 0 to 1000 mm, humidity 0 to 100%."}), 400
 
-    features = pd.DataFrame(
-        [{
-            "Temperature": temperature,
-            "Rainfall": rainfall,
-            "Humidity": humidity,
-            "Soil_Type": soil_type,
-        }]
-    )
-    probabilities = model.predict_proba(features)[0]
-    best_index = probabilities.argmax()
-    crop = model.classes_[best_index]
-    confidence = round(float(probabilities[best_index]) * 100, 1)
-    alternatives = sorted(
-        zip(model.classes_, probabilities), key=lambda item: item[1], reverse=True
-    )[1:4]
+    if soil_type not in soil_types:
+        return jsonify({"error": f"Choose one of these soil types: {', '.join(soil_types)}"}), 400
 
-    return jsonify({
-        "crop": crop,
-        "confidence": confidence,
-        "alternatives": [
-            {"crop": name, "confidence": round(float(score) * 100, 1)}
-            for name, score in alternatives
-        ],
+    payload = json.dumps({
+        "Temperature": temperature,
+        "Rainfall": rainfall,
+        "Humidity": humidity,
+        "Soil_Type": soil_type,
     })
+    try:
+        prediction = subprocess.run(
+            [RSCRIPT_PATH, str(BASE_DIR / "model.R"), str(DATA_PATH)],
+            input=payload,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        return jsonify(json.loads(prediction.stdout))
+    except (OSError, subprocess.CalledProcessError, json.JSONDecodeError) as error:
+        return jsonify({"error": f"R model could not make a prediction: {error}"}), 500
 
 
 if __name__ == "__main__":
